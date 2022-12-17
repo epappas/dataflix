@@ -23,9 +23,10 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
   const result = await Dataflix.addDatasource(
     "test-source",
-    "ipfs.io/foo/bar",
+    "arn:partition:service:region:account-id:resource-type/resource-id",
+    "889bef41-64da-41d1-b06b-c9f072094fde",
     ethers.utils.parseUnits("1", "ether"),
-    0,
+    60 * 60 * 24 * 30, // 1 Month
   );
   console.log("result", result);
 
