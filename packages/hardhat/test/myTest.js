@@ -10,10 +10,10 @@ describe("My Dapp", function () {
   });
 
   describe("Dataflix", function () {
-    it("Should deploy YourContract", async function () {
-      const YourContract = await ethers.getContractFactory("Dataflix");
+    it("Should deploy Dataflix", async function () {
+      const Dataflix = await ethers.getContractFactory("Dataflix");
 
-      myContract = await YourContract.deploy();
+      myContract = await Dataflix.deploy();
     });
   });
 });

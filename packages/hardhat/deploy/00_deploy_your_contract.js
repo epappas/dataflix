@@ -20,15 +20,19 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
   // Getting a previously deployed contract
   const Dataflix = await ethers.getContract("Dataflix", deployer);
-  /*  await Dataflix.setPurpose("Hello");
-  
-    // To take ownership of dataflix using the ownable library uncomment next line and add the 
-    // address you want to be the owner. 
-    
+
+  const result = await Dataflix.addDatasource(
+    "test-source",
+    "ipfs.io/foo/bar",
+    ethers.utils.parseUnits("1", "ether"),
+    0,
+  );
+  console.log("result", result);
+
+  /*
     await Dataflix.transferOwnership(
       "ADDRESS_HERE"
     );
-
     //const Dataflix = await ethers.getContractAt('Dataflix', "0xaAC799eC2d00C013f1F11c37E654e59B0429DF6A") //<-- if you want to instantiate a version of a contract at a specific address!
   */
 

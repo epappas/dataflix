@@ -34,25 +34,6 @@ import { Home, ExampleUI, Hints, Subgraph } from "./views";
 import { useStaticJsonRPC } from "./hooks";
 
 const { ethers } = require("ethers");
-/*
-    Welcome to 🏗 dataflix !
-
-    Code:
-    https://github.com/dataflix/dataflix
-
-    Support:
-    https://t.me/joinchat/KByvmRe5wkR-8F_zz6AjpA
-    or DM @austingriffith on twitter or telegram
-
-    You should get your own Alchemy.com & Infura.io ID and put it in `constants.js`
-    (this is your connection to the main Ethereum network for ENS etc.)
-
-
-    🌏 EXTERNAL CONTRACTS:
-    You can also bring in contract artifacts in `constants.js`
-    (and then use the `useExternalContractLoader()` hook!)
-*/
-
 /// 📡 What chain are your contracts deployed to?
 const initialNetwork = NETWORKS.localhost; // <------- select your target frontend network (localhost, goerli, xdai, mainnet)
 
@@ -177,7 +158,7 @@ function App(props) {
   );
 
   // keep track of a variable from the contract in the local React state:
-  const purpose = useContractReader(readContracts, "YourContract", "purpose", [], localProviderPollingTime);
+  const purpose = useContractReader(readContracts, "Dataflix", "purpose", [], localProviderPollingTime);
 
   /*
   const addressFromENS = useResolveName(mainnetProvider, "austingriffith.eth");
@@ -330,7 +311,7 @@ function App(props) {
             */}
 
           <Contract
-            name="YourContract"
+            name="Dataflix"
             price={price}
             signer={userSigner}
             provider={localProvider}

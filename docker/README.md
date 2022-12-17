@@ -6,17 +6,6 @@ Prerequisites:
 - [Git](https://git-scm.com/)
 - Bash Shell: available in macOS by default and the vast majority of Linux distros
 
-**\*Note**: If you are using a Windows environment, you can use
-[Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/) or a Bash emulator like "Git BASH"
-(which its included in [Git for Windows](https://gitforwindows.org/)). If you use WSL take into account that you should
-[configure Docker to use the WSL 2 backend](https://docs.docker.com/desktop/windows/wsl/).\*
-
-> clone/fork 🏗 dataflix:
-
-```bash
-git clone https://github.com/dataflix/dataflix.git
-```
-
 > [basic] run the script that sets the stack up and that's it (takes some minutes to finish):
 
 ```bash
@@ -63,11 +52,3 @@ docker run \
   --entrypoint /bin/bash \
   -ti node:16
 ```
-
-🔏 Edit your smart contract `YourContract.sol` in `packages/hardhat/contracts`
-
-📝 Edit your frontend `App.jsx` in `packages/react-app/src`
-
-💼 Edit your deployment scripts in `packages/hardhat/deploy`
-
-📱 Open http://localhost:3000 to see the app

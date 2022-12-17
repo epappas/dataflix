@@ -1,5 +1,5 @@
-pragma solidity >=0.8.4;
 //SPDX-License-Identifier: MIT
+pragma solidity >=0.8.4;
 
 import "hardhat/console.sol";
 
@@ -12,28 +12,46 @@ contract Dataflix is ERC1155, Ownable {
 
     struct Datasource {
         string name;
-        string uri;
-        uint256 subscribers;
+        string resourceUri;
+        string policyUri;
         uint256 price;
-        uint256 time;
+        uint256 subscriptions;
+        uint256 expirationTime;
     }
 
-    struct Subscriber {
+    struct Subscription {
+        address subscriber;
         uint256 datasource;
-        uint256 date;
+        string principalUri;
+        uint256 createdAt;
     }
 
     mapping(uint256 => Datasource) internal datasources;
+    mapping(uint256 => Subscription) internal subscriptions;
+    mapping(address => uint256[]) internal subscribers;
 
-    mapping(address => Subscriber) internal subscribers;
-
+    string public name;
+    string public symbol;
     uint256 public totalDatasources;
+    uint256 public totalSubscriptions;
+
+    event NewDatasource(uint256 datasourceId);
+    event DatasourceUpdated(uint256 datasourceId);
+
+    event NewSubscription(
+        address indexed subscriber,
+        uint256 indexed datasourceId,
+        uint256 indexed subscriptionId
+    );
 
     constructor(
-        string memory name,
-        string memory symbol,
-        string memory uri
-    ) ERC1155(uri) {}
+        string memory _name,
+        string memory _symbol,
+        string memory _uri
+    ) ERC1155(_uri) {
+        name = _name;
+        symbol = _symbol;
+    }
 
     modifier correctId(uint256 id) {
         require(
@@ -43,93 +61,140 @@ contract Dataflix is ERC1155, Ownable {
         _;
     }
 
+    modifier datasourceExists(uint256 id) {
+        require(
+            datasources[id].expirationTime != 0,
+            "provide a correct datasourceID"
+        );
+        _;
+    }
+
+    modifier correctPrice(uint256 id) {
+        require(
+            msg.value == datasources[id].price,
+            "please send correct amount of ether"
+        );
+        _;
+    }
+
+    modifier notExpired(uint256 datasourceId, uint256 createdAt) {
+        require(
+            block.timestamp <
+                (datasources[datasourceId].expirationTime + createdAt),
+            "The subscription is expired"
+        );
+        _;
+    }
+
+    modifier validSubscription(address user, uint256 subscriptionId) {
+        require(
+            subscriptions[subscriptionId].createdAt != 0 &&
+                subscriptions[subscriptionId].subscriber == user &&
+                subscribers[user].length > 0,
+            "doesn't have any active subscription"
+        );
+        require(
+            (block.timestamp).sub(subscriptions[subscriptionId].createdAt) <
+                datasources[subscriptions[subscriptionId].datasource]
+                    .expirationTime,
+            "doesn't have any active datasource"
+        );
+        _;
+    }
+
     function setURI(string memory uri) external onlyOwner {
         _setURI(uri);
     }
 
-    function ifExpired(uint256 id) internal view returns (bool) {
-        if (subscribers[msg.sender].datasource == id) {
-            if (
-                (block.timestamp).sub(subscribers[msg.sender].date) <
-                datasources[id].time
-            ) {
-                return false;
-            } else {
-                return true;
-            }
-        } else {
-            return true;
-        }
-    }
-
     function addDatasource(
         string memory _name,
-        string memory uri,
+        string memory resourceUri,
+        string memory policyUri,
         uint256 price,
         uint256 time
     ) external onlyOwner {
-        totalDatasources = totalDatasources.add(1);
         uint256 id = totalDatasources.add(1);
-        datasources[id] = Datasource(_name, uri, 0, price, time);
+        totalDatasources = totalDatasources.add(1);
+
+        datasources[id] = Datasource(
+            _name,
+            resourceUri,
+            policyUri,
+            0,
+            price,
+            time
+        );
+
+        emit NewDatasource(id);
     }
 
     function updateDatasource(
         uint256 id,
         string memory _name,
-        string memory uri,
+        string memory resourceUri,
+        string memory policyUri,
         uint256 price,
         uint256 time
-    ) external onlyOwner {
+    ) external onlyOwner datasourceExists(id) {
         datasources[id] = Datasource(
             _name,
-            uri,
-            datasources[id].subscribers,
+            resourceUri,
+            policyUri,
+            datasources[id].subscriptions,
             price,
             time
         );
+
+        emit DatasourceUpdated(id);
     }
 
-    function subscribe(uint256 datasourceId)
+    function subscribe(uint256 datasourceId, string memory principalUri)
         external
         payable
         correctId(datasourceId)
+        datasourceExists(datasourceId)
+        correctPrice(datasourceId)
     {
-        require(
-            ifExpired(datasourceId) == true,
-            "your current datasource hasn't expired yet"
-        );
-        require(
-            msg.value == datasources[datasourceId].price,
-            "please send correct amount of ether"
+        uint256 id = totalSubscriptions.add(1);
+        totalSubscriptions = totalSubscriptions.add(1);
+
+        datasources[datasourceId].subscriptions = (
+            datasources[datasourceId].subscriptions
+        ).add(1);
+
+        subscriptions[id] = Subscription(
+            msg.sender,
+            datasourceId,
+            principalUri,
+            block.timestamp
         );
 
-        datasources[datasourceId].subscribers = (
-            datasources[datasourceId].subscribers
-        ).add(1);
-        subscribers[msg.sender] = Subscriber(datasourceId, block.timestamp);
+        subscribers[msg.sender].push(id);
 
         // destroys the user’s NFTs for any inactive datasources using the _burn function.
-        _burn(
-            msg.sender,
-            subscribers[msg.sender].datasource,
-            balanceOf(msg.sender, subscribers[msg.sender].datasource)
-        );
-
-        datasources[subscribers[msg.sender].datasource].subscribers = (
-            datasources[subscribers[msg.sender].datasource].subscribers
-        ).sub(balanceOf(msg.sender, subscribers[msg.sender].datasource));
+        _burn(msg.sender, datasourceId, balanceOf(msg.sender, datasourceId));
 
         _mint(msg.sender, datasourceId, 1, "");
         payable(msg.sender).transfer(msg.value);
+
+        emit NewSubscription(msg.sender, datasourceId, id);
     }
 
-    function currentDatasource(address user) public view returns (uint256) {
-        require(
-            (block.timestamp).sub(subscribers[msg.sender].date) <
-                datasources[subscribers[msg.sender].datasource].time,
-            "doesn't have any active datasource"
-        );
-        return subscribers[user].datasource;
+    function selectSubscriptions(address user)
+        public
+        view
+        returns (uint256[] memory)
+    {
+        return subscribers[user];
+    }
+
+    function selectDatasource(address user, uint256 subscriptionId)
+        public
+        view
+        validSubscription(user, subscriptionId)
+        returns (uint256)
+    {
+        return subscriptions[subscriptionId].datasource;
     }
 
     function tokenURI(uint256 id)
@@ -138,7 +203,7 @@ contract Dataflix is ERC1155, Ownable {
         correctId(id)
         returns (string memory)
     {
-        return datasources[id].uri;
+        return datasources[id].resourceUri;
     }
 
     function tokenSupply(uint256 id)
@@ -147,7 +212,7 @@ contract Dataflix is ERC1155, Ownable {
         correctId(id)
         returns (uint256)
     {
-        return datasources[id].subscribers;
+        return datasources[id].subscriptions;
     }
 
     function tokenPrice(uint256 id)
@@ -160,7 +225,7 @@ contract Dataflix is ERC1155, Ownable {
     }
 
     function totalSupply() public view returns (uint256) {
-        return totalDatasources;
+        return totalSubscriptions;
     }
 
     function balance() public view onlyOwner returns (uint256) {
