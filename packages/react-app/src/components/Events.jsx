@@ -12,7 +12,7 @@ import Address from "./Address";
   <Events
     contracts={readContracts}
     contractName="Dataflix"
-    eventName="SetPurpose"
+    eventName="NewSubscription"
     localProvider={localProvider}
     mainnetProvider={mainnetProvider}
     startBlock={1}

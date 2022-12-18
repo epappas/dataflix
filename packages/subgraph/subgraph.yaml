@@ -14,12 +14,17 @@ dataSources:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - Purpose
-        - Sender
+        - Datasource
+        - Subscription
+        - Subscriber
       abis:
         - name: Dataflix
           file: ./abis/localhost_Dataflix.json
       eventHandlers:
-        - event: SetPurpose(address,string)
-          handler: handleSetPurpose
+        - event: NewDatasource(uint256)
+          handler: handleNewDatasource
+        - event: DatasourceUpdated(uint256)
+          handler: handleDatasourceUpdated
+        - event: NewSubscription(indexed address,indexed uint256,indexed uint256)
+          handler: handleNewSubscription
       file: ./src/mapping.ts
